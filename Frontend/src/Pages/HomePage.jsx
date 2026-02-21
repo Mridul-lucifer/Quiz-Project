@@ -1,84 +1,93 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { Link } from 'react-router-dom';
 
 export default function HomePage() {
-  const [topic, setTopic] = useState('');
-  const [materials, setMaterials] = useState([]);
-  const [loading, setLoading] = useState(false);
-
-  const handleSearch = async (e) => {
-    e.preventDefault();
-    if (!topic) return;
-
-    setLoading(true);
-    const baseUrl = import.meta.env.VITE_API_URL; 
-    try {
-      const response = await fetch(`${baseUrl}/search/${topic}`, {
-        method: 'POST',
-      });
-      const data = await response.json();
-      setMaterials(data);
-    } catch (err) {
-      console.error("Error fetching study materials:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-slate-50 font-sans text-slate-900">
-      {/* Hero Header */}
-      <header className="bg-indigo-700 py-16 px-4 text-center text-white">
-        <h1 className="text-4xl font-extrabold mb-4">AI Study Assistant</h1>
-        <p className="text-indigo-100 mb-8">Type any topic to generate a custom study guide instantly.</p>
-        
-        <form onSubmit={handleSearch} className="max-w-2xl mx-auto flex gap-2">
-          <input 
-            type="text"
-            value={topic}
-            onChange={(e) => setTopic(e.target.value)}
-            placeholder="e.g. French Revolution, Cell Division, Python Loops..."
-            className="flex-grow p-4 rounded-lg text-slate-900 shadow-lg outline-none focus:ring-4 ring-indigo-400"
-          />
-          <button 
-            type="submit"
-            className="bg-amber-400 hover:bg-amber-500 text-indigo-900 font-bold px-8 rounded-lg transition transform active:scale-95 shadow-lg"
-          >
-            {loading ? 'Generating...' : 'Learn'}
-          </button>
-        </form>
-      </header>
+    <div className="min-h-screen bg-white">
+      {/* Hero Section */}
+      <section className="pt-20 pb-16 px-6 text-center bg-gradient-to-b from-blue-50 to-white">
+        <h1 className="text-5xl md:text-6xl font-extrabold text-slate-900 mb-6 tracking-tight">
+          Turn your Study Material into <br />
+          <span className="text-blue-600">Smart Quizzes</span>
+        </h1>
+        <p className="max-w-2xl mx-auto text-lg text-slate-600 mb-10 leading-relaxed">
+          Upload photos of your textbooks or paste your lecture notes. Our AI extracts the core concepts 
+          and generates high-quality questions and answers instantly.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <Link to="/imageInput" className="px-8 py-4 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-200">
+            Try Image OCR
+          </Link>
+          <Link to="/valueInput" className="px-8 py-4 bg-white text-slate-700 border border-slate-200 rounded-xl font-bold hover:bg-slate-50 transition-all">
+            Paste Text
+          </Link>
+        </div>
+      </section>
 
-      {/* Results Section */}
-      <main className="max-w-5xl mx-auto py-12 px-6">
-        {loading ? (
-          <div className="text-center py-20 animate-pulse">
-            <div className="text-6xl mb-4">📚</div>
-            <p className="text-xl text-slate-500 font-medium">Building your study guide for "{topic}"...</p>
-          </div>
-        ) : (
-          <div className="grid gap-8">
-            {materials.map((item, i) => (
-              <section key={i} className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm hover:shadow-md transition">
-                <h2 className="text-xl font-bold text-indigo-700 mb-4 flex items-start">
-                  <span className="bg-indigo-100 text-indigo-700 w-8 h-8 rounded-full flex items-center justify-center text-sm mr-3 flex-shrink-0">
-                    {i + 1}
-                  </span>
-                  {item.question}
-                </h2>
-                <div className="pl-11 text-slate-600 leading-relaxed text-lg border-l-2 border-slate-100">
-                  {item.answer}
-                </div>
-              </section>
-            ))}
-          </div>
-        )}
+      {/* How it Works Section */}
+      <section className="py-20 px-6 max-w-7xl mx-auto">
+        <h2 className="text-3xl font-bold text-center text-slate-800 mb-12">How it Works</h2>
         
-        {!loading && materials.length === 0 && (
-          <div className="text-center text-slate-400 py-20">
-            Enter a topic above to start your journey.
+        
+
+        <div className="grid md:grid-cols-3 gap-12">
+          <div className="text-center">
+            <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 text-2xl font-bold">1</div>
+            <h3 className="text-xl font-bold mb-3 text-slate-800">Capture</h3>
+            <p className="text-slate-600">Snap a photo of your book or notes. We support JPG, PNG, and WebP formats.</p>
           </div>
-        )}
-      </main>
+          
+          <div className="text-center">
+            <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 text-2xl font-bold">2</div>
+            <h3 className="text-xl font-bold mb-3 text-slate-800">Extract</h3>
+            <p className="text-slate-600">Using Tesseract.js, we read the text locally in your browser for 100% privacy.</p>
+          </div>
+          
+          <div className="text-center">
+            <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 text-2xl font-bold">3</div>
+            <h3 className="text-xl font-bold mb-3 text-slate-800">Generate</h3>
+            <p className="text-slate-600">Our Gemini-powered AI analyzes the context to create 5 relevant Q&A pairs.</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Grid */}
+      <section className="bg-slate-900 py-20 px-6 text-white">
+        <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-16 items-center">
+          <div>
+            <h2 className="text-4xl font-bold mb-6">Built for Modern Students</h2>
+            <ul className="space-y-4">
+              <li className="flex items-start gap-3">
+                <span className="text-green-400 text-xl">✓</span>
+                <p><span className="font-bold">Privacy First:</span> Text extraction happens on your device, not our servers.</p>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="text-green-400 text-xl">✓</span>
+                <p><span className="font-bold">AI Accuracy:</span> Powered by the latest Gemini 2.5 Flash model.</p>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="text-green-400 text-xl">✓</span>
+                <p><span className="font-bold">Lightning Fast:</span> Get your study guide in under 10 seconds.</p>
+              </li>
+            </ul>
+          </div>
+          <div className="bg-slate-800 p-8 rounded-3xl border border-slate-700 shadow-2xl">
+            <pre className="text-blue-400 text-sm overflow-hidden">
+              <code>
+                {`// Your AI Prompt in Action
+const prompt = "Generate a JSON array..."
+const result = await model.generate(pageText);
+return result.response.json();`}
+              </code>
+            </pre>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="py-12 border-t border-slate-100 text-center text-slate-400 text-sm">
+        © 2026 StudyAI Project • Built with React, Tesseract.js, and Gemini
+      </footer>
     </div>
   );
 }
