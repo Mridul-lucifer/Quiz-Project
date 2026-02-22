@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ResultSection from '../components/ResultSection'
 
 export default function ValueToQuestions() {
   const [topic, setTopic] = useState('');
@@ -56,34 +57,7 @@ export default function ValueToQuestions() {
 
       {/* Results Section */}
       <main className="max-w-5xl mx-auto py-12 px-6">
-        {loading ? (
-          <div className="text-center py-20 animate-pulse">
-            <div className="text-6xl mb-4">📚</div>
-            <p className="text-xl text-slate-500 font-medium">Building your study guide for "{topic}"...</p>
-          </div>
-        ) : (
-          <div className="grid gap-8">
-            {materials.map((item, i) => (
-              <section key={i} className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm hover:shadow-md transition">
-                <h2 className="text-xl font-bold text-indigo-700 mb-4 flex items-start">
-                  <span className="bg-indigo-100 text-indigo-700 w-8 h-8 rounded-full flex items-center justify-center text-sm mr-3 flex-shrink-0">
-                    {i + 1}
-                  </span>
-                  {item.question}
-                </h2>
-                <div className="pl-11 text-slate-600 leading-relaxed text-lg border-l-2 border-slate-100">
-                  {item.answer}
-                </div>
-              </section>
-            ))}
-          </div>
-        )}
-        
-        {!loading && materials.length === 0 && (
-          <div className="text-center text-slate-400 py-20">
-            Enter a topic above to start your journey.
-          </div>
-        )}
+        <ResultSection loading={loading} items={materials} topic={topic} />
       </main>
     </div>
   );

@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import Tesseract from 'tesseract.js';
+import ResultSection from '../components/ResultSection'
 
 export default function PhotoToQuestions() {
+  const topic = "Image";
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState("");
   const [questions, setQuestions] = useState([]);
@@ -76,17 +78,9 @@ export default function PhotoToQuestions() {
         </div>
 
         {/* Results Section */}
-        <div className="space-y-4">
-          {questions.map((item, index) => (
-            <div key={index} className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-blue-500">
-              <p className="font-bold text-slate-800 mb-2">Q: {item.question}</p>
-              <p className="text-slate-600 bg-slate-50 p-3 rounded-lg border border-slate-100">
-                <span className="font-semibold text-slate-400 mr-2">A:</span> 
-                {item.answer}
-              </p>
-            </div>
-          ))}
-        </div>
+        <main className="max-w-5xl mx-auto py-12 px-6">
+          <ResultSection loading={loading} items={questions} topic={topic} />
+        </main>
       </div>
     </div>
   );
