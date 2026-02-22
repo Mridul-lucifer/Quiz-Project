@@ -44,7 +44,8 @@ app.post('/page', async (req, res) => {
         const profile = users[0] || {};
 
         // 3. Initialize Gemini
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" }); // Note: gemini-2.0-flash is current best
+        const model_name = process.env.MODEL
+        const model = genAI.getGenerativeModel({ model: model_name }); // Note: gemini-2.0-flash is current best
 
         // 4. Construct the Personalized Prompt
         // This logic should sit inside your app.post('/page') or app.post('/search/:value')
@@ -59,10 +60,9 @@ app.post('/page', async (req, res) => {
             - Academic Degree: ${profile.degree || 'General Education'}
             - Knowledge Level: ${profile.difficulty || 'Intermediate'} (Adjust technical depth accordingly)
             - Question Style: ${profile.question_level || 'Conceptual'} (Factual, Analytical, or Conceptual focus)
-            - Specific Study Goal: ${profile.goal || 'General Mastery'}
             
             CURRENT FOCUS:
-            - Topic/Source Material: "${pageText || value}"
+            - Topic/Source Material: "${pageText}"
 
             TASK:
             1. Analyze the Source Material above through the lens of a ${profile.degree} curriculum.
@@ -113,7 +113,8 @@ app.post('/search/:value', async (req, res) => {
         const p = users[0] || {};
 
         // 3. Initialize Gemini
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+        const model_name = process.env.MODEL        
+        const model = genAI.getGenerativeModel({ model: model_name });
 
         // 4. Personalized Search Prompt
         const prompt = `
@@ -125,7 +126,15 @@ app.post('/search/:value', async (req, res) => {
             Task: Create 5 ${p.question_level} style questions and answers. 
             Adjust your language to be appropriate for a ${p.degree} student at ${p.difficulty} level.
             
-            Return JSON: [{"question": "...", "answer": "..."}]
+            RULES:
+            - Return ONLY a JSON array. 
+            - No conversational text (Do NOT say "Here is your study guide").
+            - No markdown formatting.
+            
+            EXAMPLE FORMAT:
+            [
+            { "question": "What is X?", "answer": "X is..." }
+            ]
         `;
 
         const result = await model.generateContent(prompt);
