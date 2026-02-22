@@ -31,67 +31,115 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 //     }
 // });
 
-app.post('/page', async (req,res)=>{
+app.post('/page', async (req, res) => {
     try {
-        const pageText = req.body.pageText;
+        const { pageText, userId } = req.body;
 
-        // Use the model name found in your specific list
-        const model = genAI.getGenerativeModel({ 
-            model: "gemini-2.5-flash" 
-        });
+        if (!userId) {
+            return res.status(400).json({ error: "User ID required for personalization." });
+        }
 
-        const prompt = `Generate a JSON array of 5 questions and answers from "${pageText}". 
-        Return ONLY the raw JSON in this format:
-        [
-          { "question": "...", "answer": "..." }
-        ]`;
+        // 1. Fetch user context from Neon
+        const users = await sql`SELECT age, degree, difficulty, goal FROM users WHERE id = ${userId}`;
+        const profile = users[0] || {};
+
+        // 3. Initialize Gemini
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" }); // Note: gemini-2.0-flash is current best
+
+        // 4. Construct the Personalized Prompt
+        // This logic should sit inside your app.post('/page') or app.post('/search/:value')
+        // after you have fetched the 'profile' from the Neon database.
+
+        const prompt = `
+            Act as a highly specialized Personal Academic AI Tutor.
+            
+            USER CONTEXT:
+            - Age: ${profile.age || 'Not specified'}
+            - Gender: ${profile.gender || 'Not specified'}
+            - Academic Degree: ${profile.degree || 'General Education'}
+            - Knowledge Level: ${profile.difficulty || 'Intermediate'} (Adjust technical depth accordingly)
+            - Question Style: ${profile.question_level || 'Conceptual'} (Factual, Analytical, or Conceptual focus)
+            - Specific Study Goal: ${profile.goal || 'General Mastery'}
+            
+            CURRENT FOCUS:
+            - Topic/Source Material: "${pageText || value}"
+
+            TASK:
+            1. Analyze the Source Material above through the lens of a ${profile.degree} curriculum.
+            2. Generate 5 high-quality Question and Answer pairs.
+            3. The tone should be encouraging yet academically rigorous, specifically tailored for a ${profile.age} year old student.
+            4. Since the user prefers "${profile.question_level}" questions, ensure the answers provide deep ${profile.question_level} insights.
+
+            OUTPUT GUIDELINES:
+            - Return ONLY a valid JSON array.
+            - No markdown formatting, no conversational filler.
+            - Format:
+            [
+            { 
+                "question": "A ${profile.question_level} question about...", 
+                "answer": "A detailed explanation that matches the ${profile.difficulty} level..." 
+            }
+            ]
+        `;
 
         const result = await model.generateContent(prompt);
-        const response = await result.response;
-        const text = response.text();
+        const text = result.response.text();
 
-        // 1. Remove markdown code blocks if the AI includes them
+        // Clean and Parse
         const cleanJsonString = text.replace(/```json|```/g, "").trim();
-        
-        // 2. Parse and send
         const data = JSON.parse(cleanJsonString);
+        
         res.json(data);
 
     } catch (error) {
-        console.error("AI Error:", error);
-        res.status(500).json({ error: "Something went wrong with the AI call." });
+        console.error("AI/DB Error:", error);
+        res.status(500).json({ error: "Failed to generate personalized content." });
     }
 });
 
 app.post('/search/:value', async (req, res) => {
     try {
         const { value } = req.params;
+        console.log("Value "+value);
+        const { userId } = req.body; // Expecting userId in the body
+        console.log("user id "+userId);
 
-        // Use the model name found in your specific list
-        const model = genAI.getGenerativeModel({ 
-            model: "gemini-2.5-flash" 
-        });
+        if (!userId) {
+            return res.status(400).json({ error: "User ID required for personalized search." });
+        }
 
-        const prompt = `Generate a JSON array of 5 questions and answers about "${value}". 
-        Return ONLY the raw JSON in this format:
-        [
-          { "question": "...", "answer": "..." }
-        ]`;
+        // 1. Fetch user context from Neon
+        const users = await sql`SELECT age, degree, difficulty, goal FROM users WHERE id = ${userId}`;
+        const p = users[0] || {};
+
+        // 3. Initialize Gemini
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+        // 4. Personalized Search Prompt
+        const prompt = `
+            You are an elite tutor for a ${p.age} year old ${p.gender} student studying ${p.degree}.
+            Topic: ${value}.
+            Difficulty: ${p.difficulty}.
+            Focus Area: ${p.question_level} questions.
+            
+            Task: Create 5 ${p.question_level} style questions and answers. 
+            Adjust your language to be appropriate for a ${p.degree} student at ${p.difficulty} level.
+            
+            Return JSON: [{"question": "...", "answer": "..."}]
+        `;
 
         const result = await model.generateContent(prompt);
         const response = await result.response;
         const text = response.text();
 
-        // 1. Remove markdown code blocks if the AI includes them
         const cleanJsonString = text.replace(/```json|```/g, "").trim();
-        
-        // 2. Parse and send
         const data = JSON.parse(cleanJsonString);
+        
         res.json(data);
 
     } catch (error) {
-        console.error("AI Error:", error);
-        res.status(500).json({ error: "Something went wrong with the AI call." });
+        console.error("Search AI Error:", error);
+        res.status(500).json({ error: "Something went wrong with the personalized search." });
     }
 });
 
@@ -172,40 +220,28 @@ app.post('/login', async (req, res) => {
 
 app.post('/info', async (req, res) => {
     try {
-        const { age, degree, difficulty, goal, userId } = req.body;
+        const { age, gender, degree, difficulty, question_level, goal, userId } = req.body;
 
-        // Validation
-        if (!userId) {
-            return res.status(400).json({ error: "User ID is required to update info." });
-        }
+        if (!userId) return res.status(400).json({ error: "User ID required" });
 
-        // Update the user record in Neon
         const updatedUser = await sql`
             UPDATE users 
             SET 
                 age = ${age}, 
+                gender = ${gender},
                 degree = ${degree}, 
                 difficulty = ${difficulty}, 
+                question_level = ${question_level},
                 goal = ${goal}
             WHERE id = ${userId}
-            RETURNING id, email, age, degree, difficulty, goal
+            RETURNING *
         `;
 
-        if (updatedUser.length === 0) {
-            return res.status(404).json({ error: "User not found." });
-        }
-
-        res.status(200).json({
-            message: "Profile updated successfully!",
-            user: updatedUser[0]
-        });
-
+        res.status(200).json({ user: updatedUser[0] });
     } catch (error) {
-        console.error("Database Error:", error);
-        res.status(500).json({ error: "Failed to save personalized data." });
+        res.status(500).json({ error: "Failed to update personalized data." });
     }
 });
-
 app.listen(port, () => {
     console.log(`Server running`);
 });

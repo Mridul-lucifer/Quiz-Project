@@ -10,10 +10,16 @@ export default function ValueToQuestions() {
     if (!topic) return;
 
     setLoading(true);
+    const userData = JSON.parse(localStorage.getItem('user'));
+
     const baseUrl = import.meta.env.VITE_API_URL; 
     try {
       const response = await fetch(`${baseUrl}/search/${topic}`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          userId: userData.id
+        }),
       });
       const data = await response.json();
       setMaterials(data);

@@ -27,10 +27,14 @@ export default function PhotoToQuestions() {
 
       // Step 2: Send to your Backend
       setProgress("Generating questions with AI...");
+      const userData = JSON.parse(localStorage.getItem('user'));
       const response = await fetch(`${baseUrl}/page`, { // Update URL to your backend port
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pageText: text }),
+        body: JSON.stringify({ 
+          pageText: text ,
+          userId: userData.id
+        }),
       });
 
       if (!response.ok) throw new Error("Backend failed to respond");
