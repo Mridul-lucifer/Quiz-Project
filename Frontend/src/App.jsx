@@ -4,6 +4,9 @@ import {createBrowserRouter, RouterProvider} from 'react-router-dom'
 import HomePage from './Pages/HomePage'
 import ValueToQuestions from './Pages/ValueToQuestions'
 import PhotoToQuestions from './Pages/PhotoToQuestions'
+import LoginPage from './Pages/LoginPage'
+import SignUpPage from './Pages/SignUpPage'
+import ProfileSetup from './Pages/ProfileSetup'
 import Header from './components/Header'
 
 export default function App() {
@@ -20,6 +23,18 @@ export default function App() {
     {
       path : '/imageInput',
       element : <><Header/><PhotoToQuestions/></>
+    },
+    {
+      path : '/signup',
+      element : <><Header/><SignUpPage/></>
+    },
+    {
+      path : '/login',
+      element : <><Header/><LoginPage/></>
+    },
+    {
+      path : '/profile-setup',
+      element : <><Header/><ProfileSetup/></>
     }
   ])
   return (
