@@ -1,89 +1,71 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 export default function ResultSection({ loading, items, topic }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
 
-  if (loading) {
-    return (
-      <div className="text-center py-20">
-        <div className="inline-block animate-bounce text-6xl mb-4">🧠</div>
-        <p className="text-xl text-slate-500 font-medium animate-pulse">
-          Crafting personalized cards {topic ? `for "${topic}"` : "from image"}...
-        </p>
-      </div>
-    );
-  }
-
-  if (!items || items.length === 0) {
-    return (
-      <div className="text-center text-slate-400 py-20 bg-white border-2 border-dashed border-slate-200 rounded-3xl mt-8">
-        No cards generated yet. Start above!
-      </div>
-    );
-  }
-
-  const handleNext = () => {
+  useEffect(() => {
     setIsFlipped(false);
-    setTimeout(() => {
-      setCurrentIndex((prev) => (prev + 1) % items.length);
-    }, 150);
-  };
+  }, [currentIndex]);
 
-  const handlePrev = () => {
-    setIsFlipped(false);
-    setTimeout(() => {
-      setCurrentIndex((prev) => (prev - 1 + items.length) % items.length);
-    }, 150);
-  };
+  if (loading) return (
+    <div className="text-center py-20 animate-pulse">
+      <div className="text-6xl mb-4">🧠</div>
+      <p className="text-xl text-slate-500 font-medium">Generating your cards...</p>
+    </div>
+  );
+
+  if (!items || items.length === 0) return null;
+
+  const handleNext = () => setCurrentIndex((prev) => (prev + 1) % items.length);
+  const handlePrev = () => setCurrentIndex((prev) => (prev - 1 + items.length) % items.length);
 
   return (
-    <div className="max-w-2xl mx-auto mt-10 perspective-1000">
+    <div className="max-w-2xl mx-auto mt-10 px-4 perspective-1000">
       {/* Card Container */}
       <div 
-        className={`relative w-full h-80 transition-transform duration-500 preserve-3d cursor-pointer ${isFlipped ? 'rotate-y-180' : ''}`}
+        className={`relative w-full h-[450px] transition-transform duration-700 preserve-3d cursor-pointer ${isFlipped ? 'rotate-y-180' : ''}`}
         onClick={() => setIsFlipped(!isFlipped)}
       >
-        {/* Front Face (Question) */}
-        <div className="absolute inset-0 backface-hidden bg-white border-2 border-indigo-100 rounded-3xl shadow-xl flex flex-col items-center justify-center p-8 text-center">
-          <span className="text-indigo-500 font-bold text-sm uppercase tracking-widest mb-4">Question {currentIndex + 1} of {items.length}</span>
-          <h2 className="text-lg md:text-3xl font-bold text-slate-800 leading-tight">
-            {items[currentIndex].question}
-          </h2>
-          <p className="absolute bottom-6 text-slate-400 text-sm font-medium italic">Click card to reveal answer</p>
+        
+        {/* FRONT FACE (Question) */}
+        <div className="absolute inset-0 backface-hidden bg-white border-2 border-indigo-100 rounded-3xl shadow-xl p-8 flex flex-col">
+          <span className="text-indigo-500 font-bold text-xs uppercase tracking-widest mb-4 text-center">
+            Question {currentIndex + 1} of {items.length}
+          </span>
+          
+          {/* Scrollable Content Area */}
+          <div className="flex-grow overflow-y-auto pr-2 custom-scrollbar flex items-center justify-center">
+            <h2 className="text-xl md:text-2xl font-bold text-slate-800 text-center leading-tight">
+              {items[currentIndex].question}
+            </h2>
+          </div>
+          
+          <p className="mt-4 text-slate-400 text-xs font-medium italic text-center">Click to see answer</p>
         </div>
 
-        {/* Back Face (Answer) */}
-        <div className="absolute inset-0 backface-hidden bg-indigo-600 rounded-3xl shadow-xl flex flex-col items-center justify-center p-8 text-center rotate-y-180 text-white">
-          <span className="text-indigo-200 font-bold text-sm uppercase tracking-widest mb-4">Answer</span>
-          <div className="overflow-y-auto max-h-full scrollbar-hide">
+        {/* BACK FACE (Answer) */}
+        <div className="absolute inset-0 backface-hidden bg-indigo-600 rounded-3xl shadow-xl p-8 flex flex-col rotate-y-180 text-white">
+          <span className="text-indigo-200 font-bold text-xs uppercase tracking-widest mb-4 text-center">
+            Detailed Explanation
+          </span>
+          
+          {/* Scrollable Content Area */}
+          <div className="flex-grow overflow-y-auto pr-2 custom-scrollbar">
             <p className="text-lg md:text-xl leading-relaxed">
               {items[currentIndex].answer}
             </p>
           </div>
-          <p className="absolute bottom-6 text-indigo-200 text-sm font-medium italic">Click card to see question</p>
+          
+          <p className="mt-4 text-indigo-200 text-xs font-medium italic text-center">Click to see question</p>
         </div>
       </div>
 
-      {/* Navigation Controls */}
-      <div className="flex items-center justify-between mt-8 px-4">
-        <button 
-          onClick={handlePrev}
-          className="flex items-center gap-2 px-6 py-3 bg-white border border-slate-200 text-slate-600 rounded-xl font-bold hover:bg-slate-50 transition active:scale-95 shadow-sm"
-        >
-          ← Prev
-        </button>
-        
-        <div className="text-slate-400 font-mono font-bold">
-          {currentIndex + 1} / {items.length}
-        </div>
-
-        <button 
-          onClick={handleNext}
-          className="flex items-center gap-2 px-6 py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-indigo-600 transition active:scale-95 shadow-md"
-        >
-          Next →
-        </button>
+      {/* Navigation */}
+      <div className="flex items-center justify-between mt-8">
+        <button onClick={(e) => { e.stopPropagation(); handlePrev(); }} className="px-6 py-3 bg-white border border-slate-200 rounded-xl font-bold shadow-sm active:scale-95 transition">← Prev</button>
+        <span className="text-slate-500 font-bold">{currentIndex + 1} / {items.length}</span>
+        <button onClick={(e) => { e.stopPropagation(); handleNext(); }} className="px-6 py-3 bg-slate-900 text-white rounded-xl font-bold shadow-md active:scale-95 transition">Next →</button>
       </div>
     </div>
   );

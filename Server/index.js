@@ -66,7 +66,7 @@ app.post('/page', async (req, res) => {
 
             TASK:
             1. Analyze the Source Material above through the lens of a ${profile.degree} curriculum.
-            2. Generate 5 high-quality Question and Answer pairs.
+            2. Generate all possible high-quality Question and Answer pairs.
             3. The tone should be encouraging yet academically rigorous, specifically tailored for a ${profile.age} year old student.
             4. Since the user prefers "${profile.question_level}" questions, ensure the answers provide deep ${profile.question_level} insights.
 
