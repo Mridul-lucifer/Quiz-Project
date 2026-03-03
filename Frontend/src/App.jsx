@@ -8,6 +8,7 @@ import LoginPage from './Pages/LoginPage'
 import SignUpPage from './Pages/SignUpPage'
 import ProfileSetup from './Pages/ProfileSetup'
 import Header from './components/Header'
+import Vault from './Pages/Vault'
 
 export default function App() {
 
@@ -35,6 +36,10 @@ export default function App() {
     {
       path : '/profile-setup',
       element : <><Header/><ProfileSetup/></>
+    },
+    {
+      path : '/myQuestions',
+      element : <><Header/><Vault/></>
     }
   ])
   return (

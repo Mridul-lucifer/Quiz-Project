@@ -37,8 +37,11 @@ export default function Header() {
         <div className="flex items-center gap-2">
           {isAuthenticated ? (
             <>
+              <Link to="/myquestions" className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${isActive('/myquestions')}`}>
+                Question Bank
+              </Link>
               <Link to="/valueInput" className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${isActive('/valueInput')}`}>
-                Text
+                Topic Search
               </Link>
               <Link to="/imageInput" className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${isActive('/imageInput')}`}>
                 Image OCR

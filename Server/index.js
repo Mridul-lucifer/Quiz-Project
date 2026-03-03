@@ -100,55 +100,51 @@ app.post('/page', async (req, res) => {
 app.post('/search/:value', async (req, res) => {
     try {
         const { value } = req.params;
-        console.log("Value "+value);
-        const { userId } = req.body; // Expecting userId in the body
-        console.log("user id "+userId);
+        const { userId, count } = req.body; // Getting count from frontend
 
         if (!userId) {
-            return res.status(400).json({ error: "User ID required for personalized search." });
+            return res.status(400).json({ error: "User ID required." });
         }
 
-        // 1. Fetch user context from Neon
-        const users = await sql`SELECT age, degree, difficulty, goal FROM users WHERE id = ${userId}`;
+        // 1. Fetch user context
+        const users = await sql`SELECT age, gender, degree, difficulty, question_level, goal FROM users WHERE id = ${userId}`;
         const p = users[0] || {};
 
-        // 3. Initialize Gemini
-        const model_name = process.env.MODEL        
+        const model_name = process.env.MODEL || "gemini-1.5-flash";        
         const model = genAI.getGenerativeModel({ model: model_name });
 
-        // 4. Personalized Search Prompt
+        // 2. Dynamic Prompt based on requested count
         const prompt = `
-            You are an elite tutor for a ${p.age} year old ${p.gender} student studying ${p.degree}.
+            You are an elite tutor for a ${p.age} year old ${p.gender || 'student'} studying ${p.degree || 'General Studies'}.
             Topic: ${value}.
-            Difficulty: ${p.difficulty}.
-            Focus Area: ${p.question_level} questions.
+            Difficulty: ${p.difficulty || 'Intermediate'}.
+            Focus Area: ${p.question_level || 'Conceptual'} questions.
             
-            Task: Create 5 ${p.question_level} style questions and answers. 
-            Adjust your language to be appropriate for a ${p.degree} student at ${p.difficulty} level.
+            Task: Create exactly ${count || 5} ${p.question_level || 'relevant'} style questions and answers. 
+            Adjust your language for a ${p.degree || 'standard'} student.
             
             RULES:
             - Return ONLY a JSON array. 
-            - No conversational text (Do NOT say "Here is your study guide").
-            - No markdown formatting.
+            - No markdown formatting. No backticks. No conversational filler.
+            - If text includes quotes, use single quotes inside (e.g., 'Hello').
             
-            EXAMPLE FORMAT:
-            [
-            { "question": "What is X?", "answer": "X is..." }
-            ]
+            EXAMPLE:
+            [{"question": "What is X?", "answer": "X is..."}]
         `;
 
         const result = await model.generateContent(prompt);
-        const response = await result.response;
-        const text = response.text();
+        const text = result.response.text();
 
-        const cleanJsonString = text.replace(/```json|```/g, "").trim();
-        const data = JSON.parse(cleanJsonString);
+        // 3. Robust JSON Extraction
+        const jsonMatch = text.match(/\[[\s\S]*\]/);
+        if (!jsonMatch) throw new Error("AI failed to return a valid JSON array.");
         
+        const data = JSON.parse(jsonMatch[0]);
         res.json(data);
 
     } catch (error) {
         console.error("Search AI Error:", error);
-        res.status(500).json({ error: "Something went wrong with the personalized search." });
+        res.status(500).json({ error: "Failed to generate personalized search." });
     }
 });
 
@@ -251,6 +247,56 @@ app.post('/info', async (req, res) => {
         res.status(500).json({ error: "Failed to update personalized data." });
     }
 });
+
+app.post('/save-card', async (req, res) => {
+    try {
+        const { userId, question, answer } = req.body;
+
+        if (!userId || !question || !answer) {
+            return res.status(400).json({ error: "Missing required data" });
+        }
+
+        const saved = await sql`
+            INSERT INTO saved_cards (user_id, question, answer)
+            VALUES (${userId}, ${question}, ${answer})
+            RETURNING id
+        `;
+
+        res.status(200).json({ message: "Card saved to vault!", id: saved[0].id });
+    } catch (error) {
+        console.error("Save Error:", error);
+        res.status(500).json({ error: "Failed to save card" });
+    }
+});
+
+app.get('/vault/:userId', async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const savedCards = await sql`
+            SELECT * FROM saved_cards 
+            WHERE user_id = ${userId} 
+            ORDER BY created_at DESC
+        `;
+        res.json(savedCards);
+    } catch (error) {
+        console.error("Vault Fetch Error:", error);
+        res.status(500).json({ error: "Could not retrieve your vault." });
+    }
+});
+
+// Endpoint to delete a card once mastered
+app.delete('/vault/:cardId', async (req, res) => {
+    try {
+        await sql`DELETE FROM saved_cards WHERE id = ${req.params.cardId}`;
+        res.json({ message: "Card removed from vault" });
+    } catch (error) {
+        res.status(500).json({ error: "Delete failed" });
+    }
+});
+
+
+
+
 app.listen(port, () => {
     console.log(`Server running`);
 });

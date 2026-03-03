@@ -19,7 +19,28 @@ export default function ResultSection({ loading, items, topic }) {
 
   const handleNext = () => setCurrentIndex((prev) => (prev + 1) % items.length);
   const handlePrev = () => setCurrentIndex((prev) => (prev - 1 + items.length) % items.length);
-
+  const handleSave = async (e, item) => {
+    e.stopPropagation(); // Prevent the card from flipping when clicking Save
+    const userData = JSON.parse(localStorage.getItem('user'));
+    
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/save-card`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: userData.id,
+          question: item.question,
+          answer: item.answer
+        }),
+      });
+      
+      if (response.ok) {
+        alert("Saved to your vault! ⭐");
+      }
+    } catch (err) {
+      console.error("Save failed", err);
+    }
+  };
   return (
     <div className="max-w-2xl mx-auto mt-10 px-4 perspective-1000">
       {/* Card Container */}
@@ -33,6 +54,16 @@ export default function ResultSection({ loading, items, topic }) {
           <span className="text-indigo-500 font-bold text-xs uppercase tracking-widest mb-4 text-center">
             Question {currentIndex + 1} of {items.length}
           </span>
+          
+          <button 
+            onClick={(e) => handleSave(e, items[currentIndex])}
+            className="p-2 hover:bg-indigo-50 rounded-full transition-colors text-indigo-400 hover:text-indigo-600"
+            title="Save to Vault"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+            </svg>
+          </button>
           
           {/* Scrollable Content Area */}
           <div className="flex-grow overflow-y-auto pr-2 custom-scrollbar flex items-center justify-center">
