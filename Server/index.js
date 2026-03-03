@@ -225,26 +225,30 @@ app.post('/login', async (req, res) => {
 
 app.post('/info', async (req, res) => {
     try {
-        const { age, gender, degree, difficulty, question_level, goal, userId } = req.body;
+        const { age, gender, degree, difficulty, question_level, userId } = req.body;
 
-        if (!userId) return res.status(400).json({ error: "User ID required" });
+        if (!userId) return res.status(400).json({ error: "User ID is required" });
 
-        const updatedUser = await sql`
+        // COALESCE checks if the first value is null; if so, it keeps the current DB value
+        const result = await sql`
             UPDATE users 
             SET 
-                age = ${age}, 
-                gender = ${gender},
-                degree = ${degree}, 
-                difficulty = ${difficulty}, 
-                question_level = ${question_level},
-                goal = ${goal}
+                age = COALESCE(${age || null}, age), 
+                gender = COALESCE(${gender || null}, gender),
+                degree = COALESCE(${degree || null}, degree), 
+                difficulty = COALESCE(${difficulty || null}, difficulty), 
+                question_level = COALESCE(${question_level || null}, question_level)
             WHERE id = ${userId}
             RETURNING *
         `;
 
-        res.status(200).json({ user: updatedUser[0] });
+        res.json({ 
+            message: "Profile updated successfully!", 
+            user: result[0] 
+        });
     } catch (error) {
-        res.status(500).json({ error: "Failed to update personalized data." });
+        console.error("Profile Update Error:", error);
+        res.status(500).json({ error: "Failed to update profile preferences." });
     }
 });
 

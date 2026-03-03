@@ -6,16 +6,22 @@ export default function ProfileSetup() {
   const [loading, setLoading] = useState(false);
   const [profile, setProfile] = useState({
     age: '',
-    gender: '', // New
+    gender: '',
     degree: '',
     difficulty: 'intermediate',
-    question_level: 'conceptual', // New: conceptual, analytical, or factual
+    question_level: 'conceptual',
     goal: ''
   });
 
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) navigate('/login');
+    
+    // Optional: Pre-fill form if user data exists in localStorage
+    const savedUser = JSON.parse(localStorage.getItem('user') || '{}');
+    if (savedUser.age) {
+        setProfile(prev => ({...prev, ...savedUser}));
+    }
   }, [navigate]);
 
   const handleSubmit = async (e) => {
@@ -25,12 +31,17 @@ export default function ProfileSetup() {
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     const apiUrl = import.meta.env.VITE_API_URL;
 
+    // Filter out empty strings so we only update what the user typed
+    const payload = Object.fromEntries(
+        Object.entries(profile).filter(([_, value]) => value !== '')
+    );
+
     try {
       const response = await fetch(`${apiUrl}/info`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          ...profile, 
+          ...payload, 
           userId: user.id 
         }),
       });
@@ -53,26 +64,30 @@ export default function ProfileSetup() {
 
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 py-12">
-      <div className="max-w-2xl w-full bg-white rounded-3xl shadow-xl p-10 border border-slate-100">
-        <div className="mb-8 text-center">
-          <h2 className="text-3xl font-extrabold text-slate-900 mb-2">Refine Your AI Tutor</h2>
-          <p className="text-slate-500">The more details you provide, the better the study material.</p>
+      <div className="max-w-2xl w-full bg-white rounded-[2.5rem] shadow-2xl p-8 md:p-12 border border-slate-100">
+        <div className="mb-10 text-center">
+          <div className="inline-block p-4 bg-indigo-50 rounded-2xl mb-4 text-3xl">🤖</div>
+          <h2 className="text-3xl font-black text-slate-900 mb-2 tracking-tight">Refine Your AI Tutor</h2>
+          <p className="text-slate-500 font-medium">All fields are optional. Fill what you want, skip the rest.</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">Current Age</label>
+              <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Current Age</label>
               <input 
-                type="number" placeholder="e.g. 20"
-                className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"
+                type="number" 
+                value={profile.age}
+                placeholder="e.g. 20"
+                className="w-full p-4 bg-slate-50 border-2 border-transparent rounded-2xl outline-none focus:border-indigo-500 focus:bg-white transition-all"
                 onChange={(e) => setProfile({...profile, age: e.target.value})}
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">Gender</label>
+              <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Gender</label>
               <select 
-                className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"
+                value={profile.gender}
+                className="w-full p-4 bg-slate-50 border-2 border-transparent rounded-2xl outline-none focus:border-indigo-500 focus:bg-white transition-all appearance-none"
                 onChange={(e) => setProfile({...profile, gender: e.target.value})}
               >
                 <option value="">Select Gender</option>
@@ -85,29 +100,46 @@ export default function ProfileSetup() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">Degree / Major</label>
+              <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Degree / Major</label>
               <input 
-                type="text" placeholder="e.g. Physics"
-                className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"
+                type="text" 
+                value={profile.degree}
+                placeholder="e.g. Computer Science"
+                className="w-full p-4 bg-slate-50 border-2 border-transparent rounded-2xl outline-none focus:border-indigo-500 focus:bg-white transition-all"
                 onChange={(e) => setProfile({...profile, degree: e.target.value})}
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">Question Type</label>
+              <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Question Style</label>
               <select 
-                className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"
+                value={profile.question_level}
+                className="w-full p-4 bg-slate-50 border-2 border-transparent rounded-2xl outline-none focus:border-indigo-500 focus:bg-white transition-all appearance-none"
                 onChange={(e) => setProfile({...profile, question_level: e.target.value})}
               >
-                <option value="conceptual">Conceptual (Why it works)</option>
-                <option value="analytical">Analytical (Problem Solving)</option>
-                <option value="factual">Factual (Definitions/Dates)</option>
+                <option value="conceptual">Conceptual (Why?)</option>
+                <option value="analytical">Analytical (How?)</option>
+                <option value="factual">Factual (What?)</option>
               </select>
             </div>
           </div>
 
-          <button type="submit" disabled={loading} className="w-full bg-blue-600 text-white py-4 rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg">
-            {loading ? "Saving Profile..." : "Save and Continue"}
-          </button>
+          <div className="pt-6 space-y-4">
+            <button 
+                type="submit" 
+                disabled={loading} 
+                className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black text-lg hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100 active:scale-[0.98] disabled:opacity-50"
+            >
+              {loading ? "Personalizing..." : "Save Preferences"}
+            </button>
+            
+            <button 
+                type="button"
+                onClick={() => navigate('/')}
+                className="w-full py-2 text-slate-400 font-bold hover:text-indigo-600 transition-colors text-sm"
+            >
+              Skip and go to Dashboard
+            </button>
+          </div>
         </form>
       </div>
     </div>
