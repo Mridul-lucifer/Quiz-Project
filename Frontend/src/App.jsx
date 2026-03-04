@@ -9,6 +9,7 @@ import SignUpPage from './Pages/SignUpPage'
 import ProfileSetup from './Pages/ProfileSetup'
 import Header from './components/Header'
 import Vault from './Pages/Vault'
+import AdminLogs from './Pages/AdminLogs'
 
 export default function App() {
 
@@ -40,6 +41,10 @@ export default function App() {
     {
       path : '/myQuestions',
       element : <><Header/><Vault/></>
+    },
+    {
+      path : '/AdminLogs',
+      element : <><Header/><AdminLogs/></>
     }
   ])
   return (

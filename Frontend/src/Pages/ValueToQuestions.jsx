@@ -31,6 +31,15 @@ export default function ValueToQuestions() {
           count: count // Sending the requested count to backend
         }),
       });
+      // This triggers first to save email, topic, and time
+      await fetch(`${baseUrl}/log-search`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          email: userData.email, 
+          topic: topic
+        }),
+      });
       const data = await response.json();
       setMaterials(data);
     } catch (err) {

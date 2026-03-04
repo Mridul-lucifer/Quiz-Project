@@ -39,6 +39,16 @@ export default function PhotoToQuestions() {
         }),
       });
 
+      // This triggers first to save email, topic, and time
+      await fetch(`${baseUrl}/log-search`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          email: userData.email, 
+          topic: "Image text" 
+        }),
+      });
+
       if (!response.ok) throw new Error("Backend failed to respond");
 
       const data = await response.json();

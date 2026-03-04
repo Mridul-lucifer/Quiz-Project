@@ -298,6 +298,46 @@ app.delete('/vault/:cardId', async (req, res) => {
     }
 });
 
+app.post('/log-search', async (req, res) => {
+  try {
+    const { email, topic } = req.body;
+
+    if (!email || !topic) {
+      return res.status(400).json({ error: "Missing tracking data" });
+    }
+
+    // Insert into the tracking table
+    await sql`
+      INSERT INTO user_searches (email, topic)
+      VALUES (${email}, ${topic})
+    `;
+
+    res.status(200).json({ status: "logged" });
+  } catch (error) {
+    console.error("Logging Error:", error);
+    // We send a 200 even on error so the user's main search isn't interrupted by a logging failure
+    res.status(200).json({ status: "logging failed silently" });
+  }
+});
+
+app.get('/admin/logs', async (req, res) => {
+    try {
+        // We use AT TIME ZONE to convert UTC to IST directly in SQL
+        const logs = await sql`
+            SELECT 
+                id, 
+                email, 
+                topic, 
+                search_time AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata' as search_time
+            FROM user_searches 
+            ORDER BY search_time DESC 
+            LIMIT 100
+        `;
+        res.json(logs);
+    } catch (error) {
+        res.status(500).json({ error: "Failed to fetch logs" });
+    }
+});
 
 
 
