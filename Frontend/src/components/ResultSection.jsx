@@ -34,9 +34,6 @@ export default function ResultSection({ loading, items, topic }) {
         }),
       });
       
-      if (response.ok) {
-        alert("Saved to your vault! ⭐");
-      }
     } catch (err) {
       console.error("Save failed", err);
     }
